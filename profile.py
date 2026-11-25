@@ -1,4 +1,4 @@
-"""v0.6: radially resolved bubble interior (uniform pressure, non-uniform temperature
+"""v0.6 (revised in v0.8: pressure now follows from argon conservation): radially resolved bubble interior (uniform pressure, non-uniform temperature
 and composition).
 
 Dynamics : Keller-Miksis wall equation.  Inside the bubble the pressure is uniform
@@ -60,11 +60,11 @@ def run(R0=4.5e-6, Pa_atm=1.3, f=26.5e3, cycles=2, pv=2337.0, Tw=293.15, mu_w=1.
 
     def rhs(t, s):
         T = np.empty(N + 1); x = np.empty(N + 1)
-        T[:N] = s[:N]; x[:N] = s[N:2 * N]
-        p, R, U = s[2 * N], s[2 * N + 1], s[2 * N + 2]
+        T[:N] = s[:N]; x[:N] = np.clip(s[N:2 * N], 0.0, 0.9999)
+        R, U = s[2 * N], s[2 * N + 1]
         T[N] = Tw
+        p = float(solve_p(T[None, :], x[None, :], np.array([R]), vol_y, pv, nar)[0])
         x[N] = min(pv / p, 0.999)
-        x = np.clip(x, 0.0, 0.9999)
         cv, cp, kTb, n, kap, nD = fields(T, x, p)
         # face fluxes (per 4 pi), r^2 * flux
         gT = np.diff(T) / (R * dy); gx = np.diff(x) / (R * dy)
@@ -103,24 +103,49 @@ def run(R0=4.5e-6, Pa_atm=1.3, f=26.5e3, cycles=2, pv=2337.0, Tw=293.15, mu_w=1.
                - 4 * mu_w * U / (rho_l * R) - 2 * sigma_w / (rho_l * R) - 1.5 * U**2 * (1 - M / 3))
         out = np.empty_like(s)
         out[:N] = dTdt[:N]; out[N:2 * N] = dxdt[:N]
-        out[2 * N] = dp; out[2 * N + 1] = U; out[2 * N + 2] = num / ((1 - M) * R)
+        out[2 * N] = U; out[2 * N + 1] = num / ((1 - M) * R)
         return out
 
-    s0 = np.concatenate([np.full(N, Tw), np.full(N, pv / p0), [p0, R0, 0.0]])
-    atol = np.concatenate([np.full(N, 1e-3), np.full(N, 1e-9), [1e-3, 1e-13, 1e-8]])
+    x0 = pv / p0
+    nar = R0**3 * np.sum(vol_y) * (1 - x0) * p0 / (kB * Tw + B_AR * p0)     # argon atoms / (4 pi)
+    s0 = np.concatenate([np.full(N, Tw), np.full(N, x0), [R0, 0.0]])
+    atol = np.concatenate([np.full(N, 1e-3), np.full(N, 1e-9), [1e-13, 1e-8]])
     sol = solve_ivp(rhs, [0, cycles / f], s0, method="LSODA", rtol=rtol, atol=atol,
                     max_step=1 / f / 400, dense_output=True)
-    return dict(sol=sol, y=y, vol_y=vol_y, N=N, f=f, R0=R0, Tw=Tw, pv=pv, Pa_atm=Pa_atm, c_l=c_l)
+    return dict(sol=sol, y=y, vol_y=vol_y, N=N, f=f, R0=R0, Tw=Tw, pv=pv, Pa_atm=Pa_atm, c_l=c_l, nar=nar)
+
+
+def solve_p(T, x, R, vol_y, pv, nar, iters=30):
+    """Uniform pressure from conservation of argon:
+    R^3 sum_i vol_i (1 - x_i) p / (k T_i + b p) = nar, with the wall value x_N = pv / p.
+    T, x: arrays (time, node); the last column of x is ignored.  Newton iteration."""
+    T = np.asarray(T, float); x = np.array(x, float)
+    w = vol_y[None, :] * R[:, None] ** 3
+    x[:, -1] = 0.0
+    p = nar / np.sum(w * (1 - x) / (kB * T), axis=1)
+    for _ in range(iters):
+        xw = np.minimum(pv / p, 0.999)
+        one_x = 1 - x; one_x[:, -1] = 1 - xw
+        den = kB * T + B_AR * p[:, None]
+        F = np.sum(w * one_x * p[:, None] / den, axis=1) - nar
+        dF = np.sum(w * one_x * kB * T / den**2, axis=1)
+        dF = dF + np.where(pv / p < 0.999, w[:, -1] * (pv / p**2) * p / den[:, -1], 0.0)
+        step = F / dF
+        p = np.maximum(p - step, 0.2 * p)
+        if np.max(np.abs(step) / p) < 1e-13:
+            break
+    return p
 
 
 def unpack(res, t):
     """Fields at times t (array).  Returns R, U, p, T[t, node], x[t, node], n[t, node]."""
     N = res["N"]
     s = res["sol"].sol(np.atleast_1d(t))
-    p, R, U = s[2 * N], s[2 * N + 1], s[2 * N + 2]
+    R, U = s[2 * N], s[2 * N + 1]
     T = np.vstack([s[:N], np.full((1, s.shape[1]), res["Tw"])]).T
-    x = np.vstack([s[N:2 * N], np.minimum(res["pv"] / p, 0.999)[None, :]]).T
-    x = np.clip(x, 0.0, 0.9999)
+    x = np.vstack([np.clip(s[N:2 * N], 0.0, 0.9999), np.zeros((1, s.shape[1]))]).T
+    p = solve_p(T, x, R, res["vol_y"], res["pv"], res["nar"])
+    x[:, -1] = np.minimum(res["pv"] / p, 0.999)
     n = p[:, None] / (kB * T + B_AR * p[:, None])
     return R, U, p, T, x, n
 
@@ -128,14 +153,19 @@ def unpack(res, t):
 def collapse_time(res):
     f = res["f"]; t_end = res["sol"].t[-1]
     tc = np.linspace(t_end - 1 / f, t_end, 40001)
-    R = res["sol"].sol(tc)[2 * res["N"] + 1]
+    R = res["sol"].sol(tc)[2 * res["N"]]
     i0 = R.argmax(); seg = R[i0:]
     j = np.where((seg[1:-1] < seg[:-2]) & (seg[1:-1] <= seg[2:]))[0][0] + 1
-    return tc[i0 + j], R.max()
+    # the minimum is far sharper than the coarse grid: refine it twice
+    tm = tc[i0 + j]
+    for width in (2 * (tc[1] - tc[0]), 0.05e-9):
+        tt = np.linspace(tm - width, tm + width, 4001)
+        tm = tt[res["sol"].sol(tt)[2 * res["N"]].argmin()]
+    return tm, R.max()
 
 
 def analyse(res, lam=np.linspace(200e-9, 800e-9, 41), half=0.6e-9, npts=401, chemistry=True,
-            nray=32, emission=True):
+            nray=32, emission=True, lowering=True):
     N = res["N"]; vol_y = res["vol_y"]; y = res["y"]
     tm, Rmax = collapse_time(res)
     tf = np.linspace(tm - half, tm + half, npts)
@@ -151,7 +181,7 @@ def analyse(res, lam=np.linspace(200e-9, 800e-9, 41), half=0.6e-9, npts=401, che
     R2, _, _, T2, x2, n2 = unpack(res, tt)
     Nar = (n2 * (1 - x2) * vol_y[None, :]).sum(1) * R2**3
     out["argon_drift"] = float(Nar.max() / Nar.min() - 1)
-    out["Umax"] = float(abs(res["sol"].sol(np.linspace(tm - 20e-9, tm + 1e-9, 4001))[2 * N + 2]).max())
+    out["Umax"] = float(abs(res["sol"].sol(np.linspace(tm - 20e-9, tm + 1e-9, 4001))[2 * N + 1]).max())
     out["Mach"] = out["Umax"] / res.get("c_l", cw)
     if not emission:
         return out
@@ -164,7 +194,7 @@ def analyse(res, lam=np.linspace(200e-9, 800e-9, 41), half=0.6e-9, npts=401, che
     def state(Tq):
         xd = dissociation(Tq, nh * xh / free) if chemistry else np.zeros_like(Tq)
         n_ar, n_h, n_o, n_m = nh * (1 - xh), 2 * xd * nh * xh, xd * nh * xh, (1 - xd) * nh * xh
-        ne, dE, ions = ion_state(Tq, n_ar, n_h, n_o, n_ar + n_h + n_o + n_m)
+        ne, dE, ions = ion_state(Tq, n_ar, n_h, n_o, n_ar + n_h + n_o + n_m, lowering=lowering)
         E = (1.5 * kB * Tq * ((1 - xh) + ne / nh) + xh * ((1 - xd) * e_w(Tq) + xd * (4.5 * kB * Tq + D_ATOM))
              + sum(ions[s] * (E_I[s] - dE) for s in ions) / nh)
         return E, xd, ne, dE, ions, dict(Ar=n_ar, H=n_h, O=n_o), n_m

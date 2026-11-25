@@ -1,6 +1,6 @@
 == benchmark case A (references: centre T dry 20,900 / 17,900 K; inert vapour 9,700 / 17,000 K; chemistry 7,000 / 8,900 K; vapour 14 % / 7.7 %)
-A dry                  Rmax  25.6 Rmin 0.907 | vapour total  0.0 % centre  0.0 % | T centre inert  15104 K, mass-avg   7508 K, centre after chemistry  13887 K | photons 5.30e+03 peak 0.0037 mW FWHM uv/red 567/594 ps | argon drift 3.7 %
-A wet                  Rmax  29.2 Rmin 0.784 | vapour total  5.5 % centre 14.2 % | T centre inert  11626 K, mass-avg   8105 K, centre after chemistry   7386 K | photons 4.69e+00 peak 0.0000 mW FWHM uv/red 288/306 ps | argon drift 3.6 %
+A dry                  Rmax  25.4 Rmin 0.895 | vapour total  0.0 % centre  0.0 % | T centre inert  15126 K, mass-avg   7509 K, centre after chemistry  13899 K | photons 5.14e+03 peak 0.0036 mW FWHM uv/red 561/588 ps | argon drift 0.0 %
+A wet                  Rmax  29.0 Rmin 0.773 | vapour total  5.4 % centre 14.1 % | T centre inert  11714 K, mass-avg   8147 K, centre after chemistry   7417 K | photons 4.82e+00 peak 0.0000 mW FWHM uv/red 282/303 ps | argon drift 0.0 %
 == standard case (R0 = 4.5 um, 26.5 kHz, water 20 C)
-wet Pa=1.3             Rmax  41.5 Rmin 0.703 | vapour total  7.4 % centre 19.1 % | T centre inert  16327 K, mass-avg  13356 K, centre after chemistry   9862 K | photons 6.58e+03 peak 0.0180 mW FWHM uv/red 132/138 ps | argon drift 6.2 %
-wet Pa=1.4             Rmax  52.6 Rmin 0.661 | vapour total 10.9 % centre 27.6 % | T centre inert  15829 K, mass-avg  15834 K, centre after chemistry  10146 K | photons 4.07e+04 peak 0.1464 mW FWHM uv/red  99/108 ps | argon drift 7.7 %
+wet Pa=1.3             Rmax  41.2 Rmin 0.685 | vapour total  7.4 % centre 19.0 % | T centre inert  16587 K, mass-avg  13553 K, centre after chemistry  10010 K | photons 7.87e+03 peak 0.0222 mW FWHM uv/red 126/135 ps | argon drift 0.0 %
+wet Pa=1.4             Rmax  52.2 Rmin 0.642 | vapour total 10.8 % centre 27.5 % | T centre inert  16091 K, mass-avg  16112 K, centre after chemistry  10278 K | photons 4.72e+04 peak 0.1747 mW FWHM uv/red  99/102 ps | argon drift 0.0 %

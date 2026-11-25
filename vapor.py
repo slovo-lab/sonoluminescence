@@ -160,6 +160,9 @@ def analyse(res, lam=np.linspace(200e-9, 800e-9, 121), chemistry=True, npts=2001
     i0 = R.argmax(); seg = R[i0:]
     j = np.where((seg[1:-1] < seg[:-2]) & (seg[1:-1] <= seg[2:]))[0][0] + 1
     tm = tc[i0 + j]
+    for width in (2 * (tc[1] - tc[0]), 0.05e-9):      # refine the sharp minimum
+        tt = np.linspace(tm - width, tm + width, 4001)
+        tm = tt[sol.sol(tt)[0].argmin()]
     tf = np.linspace(tm - 1e-9, tm + 1e-9, npts)
     Rf, Uf, Tm, Nw = sol.sol(tf)
     Nw = np.maximum(Nw, 0.0)
