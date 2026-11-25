@@ -34,7 +34,7 @@ def grid(N=64, stretch=3.0):
 
 
 def run(R0=4.5e-6, Pa_atm=1.3, f=26.5e3, cycles=2, pv=2337.0, Tw=293.15, mu_w=1.0e-3,
-        sigma_w=0.0725, N=40, rtol=1e-5, d_scale=1.0, k_scale=1.0):
+        sigma_w=0.0725, N=40, rtol=1e-5, d_scale=1.0, k_scale=1.0, rho_l=rho, c_l=cw):
     Pa = Pa_atm * 101325.0
     w = 2 * np.pi * f
     y = grid(N)
@@ -98,9 +98,9 @@ def run(R0=4.5e-6, Pa_atm=1.3, f=26.5e3, cycles=2, pv=2337.0, Tw=293.15, mu_w=1.
         dTdt = DT - conv * dTdy
         dxdt = Dx - conv * dxdy
         Pac = -Pa * np.sin(w * t)
-        M = U / cw
-        num = ((1 + M) * (p - P0 - Pac) / rho + R * dp / (rho * cw)
-               - 4 * mu_w * U / (rho * R) - 2 * sigma_w / (rho * R) - 1.5 * U**2 * (1 - M / 3))
+        M = U / c_l
+        num = ((1 + M) * (p - P0 - Pac) / rho_l + R * dp / (rho_l * c_l)
+               - 4 * mu_w * U / (rho_l * R) - 2 * sigma_w / (rho_l * R) - 1.5 * U**2 * (1 - M / 3))
         out = np.empty_like(s)
         out[:N] = dTdt[:N]; out[N:2 * N] = dxdt[:N]
         out[2 * N] = dp; out[2 * N + 1] = U; out[2 * N + 2] = num / ((1 - M) * R)
@@ -110,7 +110,7 @@ def run(R0=4.5e-6, Pa_atm=1.3, f=26.5e3, cycles=2, pv=2337.0, Tw=293.15, mu_w=1.
     atol = np.concatenate([np.full(N, 1e-3), np.full(N, 1e-9), [1e-3, 1e-13, 1e-8]])
     sol = solve_ivp(rhs, [0, cycles / f], s0, method="LSODA", rtol=rtol, atol=atol,
                     max_step=1 / f / 400, dense_output=True)
-    return dict(sol=sol, y=y, vol_y=vol_y, N=N, f=f, R0=R0, Tw=Tw, pv=pv, Pa_atm=Pa_atm)
+    return dict(sol=sol, y=y, vol_y=vol_y, N=N, f=f, R0=R0, Tw=Tw, pv=pv, Pa_atm=Pa_atm, c_l=c_l)
 
 
 def unpack(res, t):
@@ -142,7 +142,7 @@ def analyse(res, lam=np.linspace(200e-9, 800e-9, 41), half=0.6e-9, npts=401, che
     R, U, p, T, x, n = unpack(res, tf)
     Npart = n * vol_y[None, :] * R[:, None] ** 3          # particles per cell / (4 pi)
     im = R.argmin()
-    out = dict(Rmax=Rmax, Rmin=R.min(), Mach=abs(U).max() / cw,
+    out = dict(Rmax=Rmax, Rmin=R.min(), p_max=float(p.max()), n_centre=float(n[im, 0]), n_mean=float(Npart[im].sum() / (R[im] ** 3 / 3)),
                vapour_frac=float((Npart * x)[im].sum() / Npart[im].sum()),
                Tc_dyn=T[:, 0].max(),
                Tavg_dyn=float(((Npart * T).sum(1) / Npart.sum(1)).max()))
@@ -151,7 +151,8 @@ def analyse(res, lam=np.linspace(200e-9, 800e-9, 41), half=0.6e-9, npts=401, che
     R2, _, _, T2, x2, n2 = unpack(res, tt)
     Nar = (n2 * (1 - x2) * vol_y[None, :]).sum(1) * R2**3
     out["argon_drift"] = float(Nar.max() / Nar.min() - 1)
-    out["Mach"] = float(abs(res["sol"].sol(np.linspace(tm - 20e-9, tm + 1e-9, 4001))[2 * N + 2]).max() / cw)
+    out["Umax"] = float(abs(res["sol"].sol(np.linspace(tm - 20e-9, tm + 1e-9, 4001))[2 * N + 2]).max())
+    out["Mach"] = out["Umax"] / res.get("c_l", cw)
     if not emission:
         return out
     # ---- post-hoc chemistry and ionisation in hot shells (fixed volume, fixed energy)
@@ -234,5 +235,8 @@ def analyse(res, lam=np.linspace(200e-9, 800e-9, 41), half=0.6e-9, npts=401, che
                fwhm_uv=fwhm(np.trapezoid(Pl[:, uv], lam[uv], axis=1)),
                fwhm_red=fwhm(np.trapezoid(Pl[:, red], lam[red], axis=1)), T_colour=Tcol,
                x_centre=float(x[im, 0]), t_peak_minus_tRmin=float(tf[ip] - tf[im]))
+    ne_full = np.zeros_like(T); ne_full[hot] = ne
+    out["ne_centre"] = float(ne_full[ip, 0]); out["ne_max"] = float(ne_full.max())
+    out["T_lightweighted"] = float(Tfin[ip, 0])
     out["profile"] = (y, Tfin[ip], x[ip], R[ip])
     return out

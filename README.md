@@ -145,15 +145,42 @@ Reading:
 
 Effect on v0.4, standard case with doubled diffusivity (vapour share 11–17% instead of 22–37% at 1.3–1.4 atm): temperature about 11,400–12,000 K, 7,500–22,000 photons per flash, peak power 0.016–0.068 mW. The gap to the measured order of 10 mW shrinks from tens of thousands to roughly 150–600 times. The conclusion of v0.4 stands in weaker form: a uniform bubble with a realistic amount of vapour is too dim at room temperature.
 
-## v0.6 (preliminary): temperature and vapour resolved along the radius
+## v0.6: temperature and vapour resolved along the radius
 
 `profile.py` drops the uniform-bubble assumption: pressure stays uniform, while temperature and vapour share vary from centre to wall (heat conduction, vapour diffusion, Stefan flow at the wall). Chemistry and ionisation are post-hoc per shell; light is traced along rays through the shells. Numbers: [results_profile.txt](results_profile.txt).
 
-First results, not yet converged (the argon count drifts by 4–8% per cycle on the 40-node grid):
+Results. Going from 40 to 80 nodes changes the light output by 4% and the centre temperature by under 1%; the summed argon count varies by 4–7% over a cycle, less on finer grids.
 
 - Benchmark case A: vapour 5.5% in total and 14% at the centre; centre temperature 7,400 K with chemistry. The references give 7.7% and 14% vapour, 7,000 and 8,900 K.
 - Standard case, 1.3–1.4 atm: vapour 7–11% in total but 19–28% at the centre; centre temperature about 10,000 K with chemistry; 6,600–41,000 photons; peak 0.018–0.15 mW.
 - Vapour collects in the hot centre, so the centre is not the dry, bright core one might hope for. The model is still roughly 70–550 times too dim.
+
+## v0.7: a test without tuning — argon bubbles in sulfuric acid
+
+The v0.6 code was run for 85% sulfuric acid with only the liquid properties changed (density, sound speed, viscosity, surface tension, vapour pressure 0.04 torr) and the bubble size and drive taken from the experiment. Nothing was fitted. Script: `acid_study.py`, numbers: [results_acid.txt](results_acid.txt). Measurements: Flannigan, Hopkins, Camara, Putterman & Suslick (2006); liquid data and brightness ratios: Hopkins et al. (2005).
+
+| | Model | Measured |
+|---|---|---|
+| **Dim bubble** (R0 13 µm, 1.4 bar): collapse radius | 3.00 µm | 3.1 µm |
+| Gas density at the centre | 1.19 × 10²¹ cm⁻³ | 1.0–1.2 × 10²¹ cm⁻³ |
+| Temperature at the centre | 12,000 K | 10,000 K |
+| Pressure | 2,160 bar | 1,100–1,600 bar |
+| Electron density | 4.2 × 10¹⁸ cm⁻³ | 3.8 × 10¹⁷ cm⁻³ |
+| **Bright bubble** (R0 17 µm, 1.7 bar): collapse radius | 3.67 µm | 3.5 µm |
+| Gas density at the centre | 1.50 × 10²¹ cm⁻³ | 1.8 × 10²¹ cm⁻³ |
+| Pressure | 4,440 bar | 3,700 bar |
+| Flash duration | 4.1 ns | 5–10 ns |
+| Brightness, bright / dim | 250 times | about 10,000 times |
+| Brightness, bright acid / water | 330–2,000 times | 1,500–2,700 times |
+
+Reading:
+
+- **Mechanics and thermodynamics agree.** Collapse radius within 5%, gas density within 20%, temperature within 20%, pressure within a factor of 1.2 to 2. The model also gives nanosecond flashes in acid against 0.1 ns in water, as observed.
+- **The acid/water brightness ratio comes out at the measured order.** Bookkeeping: the acid bubble holds 54 times more atoms and shines 41 times longer; the temperatures are similar.
+- **Vapour is still decisive.** The same acid bubble given the vapour pressure of water traps 7.7% vapour, cools from 16,000 K to 6,500 K and emits 86,000 times less light.
+- **Brightness and electron density are not predicted, only bracketed.** A ±10% change in drive pressure, the stated tolerance of the experimental fits, moves the dim bubble's light output from 1.6 photons to 4.3 million photons per flash and its temperature from 6,600 to 16,100 K. The electron density is 11 times too high at 30 kHz and 0.6 times the measured value at 37.8 kHz.
+
+Caveats: the acoustic frequency is not given in the 2006 paper and 30 kHz is assumed; at 37.8 kHz the dim bubble gives 9,100 K, 1,180 bar and 0.90 × 10²¹ cm⁻³. Lowering the viscosity from 25 to 10 mPa·s raises the light 57-fold.
 
 ## Open questions
 
@@ -162,7 +189,9 @@ First results, not yet converged (the argon count drifts by 4–8% per cycle on 
 - ~~How much does water vapour cool the collapse?~~ By more than half, see v0.4.
 - ~~Is the trapped vapour share (22–37%) right?~~ Right at moderate drive, 1.5–2.2 times too high at strong drive, see v0.5.
 - Check the benchmark numbers against the original papers.
-- Does a hot centre (non-uniform temperature) supply the missing light?
+- ~~Does a hot centre (non-uniform temperature) supply the missing light?~~ No: vapour collects at the centre, see v0.6.
+- What acoustic frequency was used for the argon bubbles in sulfuric acid?
+- Add xenon, to use the xenon measurements in acid and water.
 - Do water and its fragments (OH, H, O) emit enough light to fill the gap?
 - Which heat-loss model is right for the dry bubble?
 - ~~Does electron–neutral bremsstrahlung change the spectrum shape?~~ Yes, see v0.3.
@@ -191,6 +220,8 @@ python reproduce.py
 - Stewart & Pyatt, Astrophys. J. 144, 1203 (1966)
 - Toegel, Gompf, Pecha & Lohse, Phys. Rev. Lett. 85, 3165 (2000)
 - Toegel, Hilgenfeldt & Lohse, Phys. Rev. Lett. 88, 034301 (2002)
+- Hopkins, Putterman, Kappus, Suslick & Camara, Phys. Rev. Lett. 95, 254301 (2005)
+- Flannigan, Hopkins, Camara, Putterman & Suslick, Phys. Rev. Lett. 96, 204301 (2006)
 - Storey & Szeri, Proc. R. Soc. Lond. A 456, 1685 (2000)
 - Storey & Szeri, Phys. Rev. Lett. 88, 074301 (2002)
 - arXiv:physics/0501041
