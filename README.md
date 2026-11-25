@@ -124,12 +124,35 @@ A second finding concerns the dry model itself: the boundary-layer heat model gi
 
 Caveats: chemistry and ionisation are post-hoc (issue #6); only atoms are produced (no OH, H₂, O₂), which understates cooling at intermediate temperatures; the argon cross-section stands in for all neutrals; no light from water or its fragments.
 
+## v0.5: is the trapped vapour share right? (issue #9)
+
+The v0.4 model was run at two cases for which simulations resolving the bubble interior are published. Reference numbers are taken from the comparison tables in arXiv:physics/0501041, which also quotes Storey & Szeri (2000); they have not yet been checked against the original papers. Script: `vapour_benchmark.py`, numbers: [results_benchmark.txt](results_benchmark.txt).
+
+| | This model | Storey & Szeri | arXiv:physics/0501041 |
+|---|---|---|---|
+| **Case A** (4.5 µm, 1.2 bar, 26.5 kHz, 298 K): vapour share | 14.9% | 14% | 7.7% |
+| Case A: temperature, inert vapour | 8,000 K | 9,700 K | 17,000 K |
+| Case A: temperature, with chemistry | 6,100 K | 7,000 K | 8,900 K |
+| Case A: temperature, dry | 9,100 K | 20,900 K | 17,900 K |
+| **Case B** (6.0 µm, 1.4 bar, 20.6 kHz, 293 K): vapour share | 50% | 33% | 23% |
+
+Reading:
+
+- **Moderate drive: agreement.** The vapour share matches Storey & Szeri within one percentage point, and the wet temperatures are 13–17% below theirs.
+- **Strong drive: too much vapour.** The boundary-layer model traps 1.5 to 2.2 times more than the resolved simulations. Doubling the vapour diffusivity brings case B to 23%.
+- **The references disagree with each other** by about a factor of two on the vapour share, and by 7,300 K on the inert-vapour temperature.
+- **Dry bubble.** The uniform model is 2 times colder than the resolved peak temperatures. Published values are peaks inside the bubble; a uniform model can only give an average.
+
+Effect on v0.4, standard case with doubled diffusivity (vapour share 11–17% instead of 22–37% at 1.3–1.4 atm): temperature about 11,400–12,000 K, 7,500–22,000 photons per flash, peak power 0.016–0.068 mW. The gap to the measured order of 10 mW shrinks from tens of thousands to roughly 150–600 times. The conclusion of v0.4 stands in weaker form: a uniform bubble with a realistic amount of vapour is too dim at room temperature.
+
 ## Open questions
 
 - ~~Does a non-ideal ionisation model close the brightness gap without an opaque core?~~ No, see v0.2.
 - Feed the ionisation energy into the wall dynamics instead of correcting afterwards.
 - ~~How much does water vapour cool the collapse?~~ By more than half, see v0.4.
-- Is the trapped vapour share (22–37%) right? Compare with published full simulations.
+- ~~Is the trapped vapour share (22–37%) right?~~ Right at moderate drive, 1.5–2.2 times too high at strong drive, see v0.5.
+- Check the benchmark numbers against the original papers.
+- Does a hot centre (non-uniform temperature) supply the missing light?
 - Do water and its fragments (OH, H, O) emit enough light to fill the gap?
 - Which heat-loss model is right for the dry bubble?
 - ~~Does electron–neutral bremsstrahlung change the spectrum shape?~~ Yes, see v0.3.
@@ -158,7 +181,9 @@ python reproduce.py
 - Stewart & Pyatt, Astrophys. J. 144, 1203 (1966)
 - Toegel, Gompf, Pecha & Lohse, Phys. Rev. Lett. 85, 3165 (2000)
 - Toegel, Hilgenfeldt & Lohse, Phys. Rev. Lett. 88, 034301 (2002)
+- Storey & Szeri, Proc. R. Soc. Lond. A 456, 1685 (2000)
 - Storey & Szeri, Phys. Rev. Lett. 88, 074301 (2002)
+- arXiv:physics/0501041
 - Tse & Leung, arXiv:cond-mat/0606359
 - Zel'dovich & Raizer, *Physics of Shock Waves and High-Temperature Hydrodynamic Phenomena*
 

@@ -41,15 +41,19 @@ def c_w(T):
     return kB * (3 + np.sum(th**2 * np.exp(th) / np.expm1(th) ** 2))
 
 
-def run(R0=4.5e-6, Pa_atm=1.3, f=26.5e3, cycles=3, pv=PV_20C, rtol=1e-9):
+def run(R0=4.5e-6, Pa_atm=1.3, f=26.5e3, cycles=3, pv=PV_20C, rtol=1e-9,
+        Tw=T0, mu_w=mu, sigma_w=sigma, d_scale=1.0):
+    """Tw, mu_w, sigma_w: liquid temperature, viscosity, surface tension.
+    d_scale multiplies the vapour diffusivity (sensitivity tests)."""
+    T0_, mu_, sig_ = Tw, mu_w, sigma_w
     Pa = Pa_atm * 101325.0
     w = 2 * np.pi * f
-    n_sat = pv / (kB * T0)
+    n_sat = pv / (kB * T0_)
     V0 = 4 * np.pi / 3 * R0**3
     Nw0 = n_sat * V0
     # argon amount: total pressure balances P0 + 2 sigma / R0
-    N_ar = (P0 + 2 * sigma / R0 - pv) * V0 / (kB * T0)
-    N_ar = N_ar / (1 + (P0 + 2 * sigma / R0 - pv) * B_AR / (kB * T0))   # co-volume correction
+    N_ar = (P0 + 2 * sig_ / R0 - pv) * V0 / (kB * T0_)
+    N_ar = N_ar / (1 + (P0 + 2 * sig_ / R0 - pv) * B_AR / (kB * T0_))   # co-volume correction
 
     def rhs(t, y):
         R, U, T, Nw = y
@@ -58,25 +62,25 @@ def run(R0=4.5e-6, Pa_atm=1.3, f=26.5e3, cycles=3, pv=PV_20C, rtol=1e-9):
         dV = 4 * np.pi * R**2 * U
         Ntot = N_ar + Nw
         free = V - N_ar * B_AR - Nw * B_W
-        D = D0_DIFF * N_REF * V / Ntot
+        D = d_scale * D0_DIFF * N_REF * V / Ntot
         chi = KAPPA_G * V / (2.5 * kB * N_ar + 4 * kB * Nw)
         aU = abs(U) + 1e-30
         l_d = min(np.sqrt(R * D / aU), R / np.pi)
         l_t = min(np.sqrt(R * chi / aU), R / np.pi)
         dNw = 4 * np.pi * R**2 * D * (n_sat - Nw / V) / l_d
-        Q = 4 * np.pi * R**2 * KAPPA_G * (T0 - T) / l_t
+        Q = 4 * np.pi * R**2 * KAPPA_G * (T0_ - T) / l_t
         p = Ntot * kB * T / free
         Cv = 1.5 * kB * N_ar + c_w(T) * Nw
-        dT = (Q - p * dV + (4 * kB * T0 - float(e_w(T))) * dNw) / Cv
+        dT = (Q - p * dV + (4 * kB * T0_ - float(e_w(T))) * dNw) / Cv
         dp = p * (dNw / Ntot + dT / T - (dV - B_W * dNw) / free)
         Pac = -Pa * np.sin(w * t)
         M = U / cw
         num = ((1 + M) * (p - P0 - Pac) / rho + R * dp / (rho * cw)
-               - 4 * mu * U / (rho * R) - 2 * sigma / (rho * R)
+               - 4 * mu_ * U / (rho * R) - 2 * sig_ / (rho * R)
                - 1.5 * U**2 * (1 - M / 3))
         return [U, num / ((1 - M) * R), dT, dNw]
 
-    sol = solve_ivp(rhs, [0, cycles / f], [R0, 0.0, T0, Nw0], method="LSODA", rtol=rtol,
+    sol = solve_ivp(rhs, [0, cycles / f], [R0, 0.0, T0_, Nw0], method="LSODA", rtol=rtol,
                     atol=[1e-13, 1e-9, 1e-6, max(Nw0, 1.0) * 1e-9], max_step=1 / f / 400,
                     dense_output=True)
     return dict(sol=sol, R0=R0, N_ar=N_ar, f=f, Pa_atm=Pa_atm, pv=pv)

@@ -1,0 +1,26 @@
+== case A
+dry                        Rmax  25.3  Rmin 1.084  T before/after ionisation budget   9148 /   9124 K
+wet                        Rmax  28.8  Rmin 0.874  vapour  14.9 %  T inert   8014 K  T chem   6091 K  diss 0.26
+wet, diffusivity x0.25     Rmax  28.5  Rmin 0.927  vapour  51.1 %  T inert   3632 K  T chem   3609 K  diss 0.00
+wet, diffusivity x0.5      Rmax  28.7  Rmin 0.850  vapour  29.2 %  T inert   5633 K  T chem   5108 K  diss 0.05
+wet, diffusivity x2.0      Rmax  28.9  Rmin 0.916  vapour   7.8 %  T inert   9924 K  T chem   6851 K  diss 0.69
+wet, diffusivity x4.0      Rmax  28.9  Rmin 0.949  vapour   4.1 %  T inert  11214 K  T chem   8683 K  diss 0.99
+== case B
+dry                        Rmax  64.6  Rmin 1.117  T before/after ionisation budget  38782 /  21795 K
+wet                        Rmax  67.9  Rmin 0.952  vapour  50.0 %  T inert   8233 K  T chem   7095 K  diss 0.08
+wet, diffusivity x0.25     Rmax  67.4  Rmin 1.694  vapour  90.4 %  T inert   3547 K  T chem   3540 K  diss 0.00
+wet, diffusivity x0.5      Rmax  67.7  Rmin 1.288  vapour  80.5 %  T inert   4562 K  T chem   4506 K  diss 0.00
+wet, diffusivity x2.0      Rmax  68.0  Rmin 0.909  vapour  22.8 %  T inert  16734 K  T chem  10397 K  diss 0.69
+wet, diffusivity x4.0      Rmax  68.0  Rmin 0.964  vapour  11.1 %  T inert  25903 K  T chem  17426 K  diss 1.00
+== case A with Pa read as 1.2 atm instead of 1.2 bar
+dry                        Rmax  27.1  Rmin 1.036  T before/after ionisation budget  10923 /  10794 K
+wet                        Rmax  30.6  Rmin 0.833  vapour  16.9 %  T inert   8572 K  T chem   6396 K  diss 0.27
+== v0.4 standard case (R0 = 4.5 um, 26.5 kHz, 20 C) with doubled diffusivity
+Pa 1.30 atm, D x1.0:  vapour  21.8 %  T   8044 K  photons 5.92e+01  peak 0.0001 mW  FWHM uv  181 ps
+Pa 1.30 atm, D x2.0:  vapour  10.9 %  T  11416 K  photons 7.46e+03  peak 0.0162 mW  FWHM uv  169 ps
+Pa 1.35 atm, D x1.0:  vapour  28.8 %  T   8219 K  photons 9.90e+01  peak 0.0002 mW  FWHM uv  142 ps
+Pa 1.35 atm, D x2.0:  vapour  13.8 %  T  11989 K  photons 1.74e+04  peak 0.0476 mW  FWHM uv  134 ps
+Pa 1.40 atm, D x1.0:  vapour  37.1 %  T   8079 K  photons 8.64e+01  peak 0.0002 mW  FWHM uv  123 ps
+Pa 1.40 atm, D x2.0:  vapour  17.1 %  T  11985 K  photons 2.18e+04  peak 0.0684 mW  FWHM uv  113 ps
+Pa 1.50 atm, D x1.0:  vapour  57.2 %  T   7152 K  photons 1.48e+01  peak 0.0000 mW  FWHM uv  118 ps
+Pa 1.50 atm, D x2.0:  vapour  25.0 %  T  11516 K  photons 1.97e+04  peak 0.0684 mW  FWHM uv   95 ps
