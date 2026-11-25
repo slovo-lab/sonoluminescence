@@ -21,7 +21,7 @@ E_ION = 15.76 * qe     # argon
 
 
 def run(R0=4.5e-6, Pa_atm=1.3, f=26.5e3, cycles=3, dE=0.0,
-        rtol=1e-10):
+        rtol=1e-10, ipd="none"):
     Pa = Pa_atm * 101325.0
     w = 2 * np.pi * f
     hc = R0 / 8.86                     # van der Waals hard core radius (argon)
@@ -47,13 +47,48 @@ def run(R0=4.5e-6, Pa_atm=1.3, f=26.5e3, cycles=3, dE=0.0,
     sol = solve_ivp(rhs, [0, cycles / f], [R0, 0.0, T0], method="LSODA",
                     rtol=rtol, atol=[1e-13, 1e-9, 1e-6], max_step=1 / f / 400,
                     dense_output=True)
-    return dict(sol=sol, R0=R0, hc=hc, N=N, f=f, Pa_atm=Pa_atm, dE=dE)
+    return dict(sol=sol, R0=R0, hc=hc, N=N, f=f, Pa_atm=Pa_atm, dE=dE, ipd=ipd)
 
 
 def ionisation(T, n, dE=0.0):
     """Saha degree of ionisation for argon (g+/g0 ~ 6)."""
     S = 2 * 6 * (2 * np.pi * me * kB * T / h_pl**2) ** 1.5 * np.exp(-(E_ION - dE) / (kB * T)) / n
     return (-S + np.sqrt(S * S + 4 * S)) / 2
+
+
+N_LIQ = 2.11e28                 # number density of liquid argon, m^-3
+DE_LIQ = (1.75 + 0.17) * qe     # lowering in liquid argon: |P+| + |V0| (15.76 -> 13.84 eV)
+
+
+def lowering(T, n, mode="none", dE0=0.0, start=None, iters=400):
+    """Density-dependent lowering of the ionisation potential, in joules.
+
+    mode "none"    : fixed shift dE0 only
+    mode "neutral" : dE0 + polarisation of the dense neutral gas, scaled linearly
+                     from the measured liquid-argon value
+    mode "plasma"  : dE0 + Stewart-Pyatt screening by free charges (self-consistent)
+    mode "both"    : neutral + plasma
+    Returns (dE, alpha).  `start` = initial guess for alpha (None -> ideal Saha).
+    """
+    T = np.asarray(T, float); n = np.asarray(n, float)
+    base = dE0 + (DE_LIQ * n / N_LIQ if mode in ("neutral", "both") else 0.0)
+    base = np.broadcast_to(base, np.broadcast(T, n).shape).astype(float)
+    a = ionisation(T, n, base) if start is None else np.full(base.shape, float(start))
+    if mode not in ("plasma", "both"):
+        return base, ionisation(T, n, base)
+    dE = base
+    for _ in range(iters):
+        ne = np.maximum(a * n, 1.0)
+        lamD = np.sqrt(eps0 * kB * T / (2 * qe**2 * ne))      # electrons + singly charged ions
+        K = e2 / (lamD * kB * T)
+        dE = base + kB * T / 4 * ((6 * K + 1) ** (2 / 3) - 1)   # Stewart-Pyatt, z = z* = 1
+        dE = np.minimum(dE, E_ION)
+        a_new = ionisation(T, n, dE)
+        if np.max(np.abs(a_new - a) / (a + 1e-300)) < 1e-10:
+            a = a_new
+            break
+        a = 0.5 * a + 0.5 * a_new
+    return dE, a
 
 
 def kappa(lam, T, n, dE=0.0):
@@ -76,7 +111,7 @@ def planck(lam, T):
     return 2 * h_pl * c0**2 / lam**5 / np.expm1(h_pl * c0 / (lam * kB * T))
 
 
-def analyse(res, lam=np.linspace(200e-9, 800e-9, 121)):
+def analyse(res, lam=np.linspace(200e-9, 800e-9, 121), energy=False):
     sol, f, hc, N = res["sol"], res["f"], res["hc"], res["N"]
     t_end = sol.t[-1]
     # last full cycle
@@ -94,11 +129,25 @@ def analyse(res, lam=np.linspace(200e-9, 800e-9, 121)):
     Rf, Uf, Tf = sol.sol(tf)
     n = N / (4 * np.pi / 3 * Rf**3)
     L = lam[None, :]
-    k = kappa(L, Tf[:, None], n[:, None], res["dE"])
+    mode = res.get("ipd", "none")
+    if energy:
+        # Post-hoc energy bookkeeping: the dynamics give 1.5 kT per atom as if nothing
+        # ionised.  Find the temperature T' at which thermal energy of atoms + electrons
+        # plus the energy spent on ionisation equals that budget (bisection in T').
+        lo = np.full_like(Tf, 300.0); hi = Tf.copy()
+        for _ in range(60):
+            mid = 0.5 * (lo + hi)
+            d_, a_ = lowering(mid, n, mode, res["dE"])
+            u = 1.5 * kB * mid * (1 + a_) + a_ * (E_ION - d_)
+            hi = np.where(u > 1.5 * kB * Tf, mid, hi); lo = np.where(u > 1.5 * kB * Tf, lo, mid)
+        Tf = 0.5 * (lo + hi)
+    dEt, at = lowering(Tf, n, mode, res["dE"])
+    k = kappa(L, Tf[:, None], n[:, None], dEt[:, None])
     Pl = 4 * np.pi**2 * Rf[:, None] ** 2 * planck(L, Tf[:, None]) * emissivity(k * Rf[:, None])  # W/m
     Nph_rate = np.trapezoid(Pl * L / (h_pl * c0), lam, axis=1)
     out = dict(Rmax=Rmax, Rmin=Rf.min(), Tmax=Tf.max(), Umax=abs(Uf).max(),
-               alpha=ionisation(Tf.max(), n[Tf.argmax()], res["dE"]),
+               alpha=at.max(), dE_eV=dEt[at.argmax()] / qe,
+               ion_energy_ratio=(at * E_ION / (1.5 * kB * Tf)).max(),
                photons=np.trapezoid(Nph_rate, tf), Ppeak=np.trapezoid(Pl, lam, axis=1).max(),
                tau_peak=(k * Rf[:, None]).max())
 
