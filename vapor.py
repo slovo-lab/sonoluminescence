@@ -111,7 +111,7 @@ def dissociation(T, nw, eta=None):
     T = np.asarray(T, float); nw = np.asarray(nw, float)
     if np.all(nw <= 0):
         return np.zeros(np.broadcast(T, nw).shape)
-    c = K_diss(T) / np.maximum(nw, 1e-300) ** 2        # 4 x^3 / (1 - x) = c
+    c = K_diss(T) / np.maximum(nw, 1.0) ** 2           # 4 x^3 / (1 - x) = c
     if eta is not None:
         c = c * np.exp(-2 * eta / (1 - eta))
     lo = np.zeros(np.broadcast(T, nw).shape); hi = np.ones_like(lo)

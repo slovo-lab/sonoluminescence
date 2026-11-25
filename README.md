@@ -145,6 +145,16 @@ Reading:
 
 Effect on v0.4, standard case with doubled diffusivity (vapour share 11–17% instead of 22–37% at 1.3–1.4 atm): temperature about 11,400–12,000 K, 7,500–22,000 photons per flash, peak power 0.016–0.068 mW. The gap to the measured order of 10 mW shrinks from tens of thousands to roughly 150–600 times. The conclusion of v0.4 stands in weaker form: a uniform bubble with a realistic amount of vapour is too dim at room temperature.
 
+## v0.6 (preliminary): temperature and vapour resolved along the radius
+
+`profile.py` drops the uniform-bubble assumption: pressure stays uniform, while temperature and vapour share vary from centre to wall (heat conduction, vapour diffusion, Stefan flow at the wall). Chemistry and ionisation are post-hoc per shell; light is traced along rays through the shells. Numbers: [results_profile.txt](results_profile.txt).
+
+First results, not yet converged (the argon count drifts by 4–8% per cycle on the 40-node grid):
+
+- Benchmark case A: vapour 5.5% in total and 14% at the centre; centre temperature 7,400 K with chemistry. The references give 7.7% and 14% vapour, 7,000 and 8,900 K.
+- Standard case, 1.3–1.4 atm: vapour 7–11% in total but 19–28% at the centre; centre temperature about 10,000 K with chemistry; 6,600–41,000 photons; peak 0.018–0.15 mW.
+- Vapour collects in the hot centre, so the centre is not the dry, bright core one might hope for. The model is still roughly 70–550 times too dim.
+
 ## Open questions
 
 - ~~Does a non-ideal ionisation model close the brightness gap without an opaque core?~~ No, see v0.2.
