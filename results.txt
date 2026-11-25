@@ -1,0 +1,25 @@
+== driving pressure scan (R0 = 4.5 um, 26.5 kHz)
+Pa=1.2 atm             Rmax  27.0 um | Rmin 0.780 um | Tmax   7438 K | Mach 0.36 | n 6.33e+27 m^-3 | photons 1.81e-02 | FWHM uv/red  247/ 247 ps | peak 0.000 mW | tau 3.2e-07 | T_colour 13300 K
+Pa=1.25 atm            Rmax  32.7 um | Rmin 0.734 um | Tmax  11006 K | Mach 0.55 | n 7.59e+27 m^-3 | photons 6.27e+01 | FWHM uv/red  195/ 195 ps | peak 0.000 mW | tau 6.8e-05 | T_colour 13300 K
+Pa=1.3 atm             Rmax  38.6 um | Rmin 0.707 um | Tmax  14803 K | Mach 0.74 | n 8.49e+27 m^-3 | photons 5.35e+03 | FWHM uv/red  170/ 170 ps | peak 0.015 mW | tau 1.5e-03 | T_colour 13300 K
+Pa=1.35 atm            Rmax  43.9 um | Rmin 0.691 um | Tmax  18371 K | Mach 0.92 | n 9.11e+27 m^-3 | photons 6.93e+04 | FWHM uv/red  159/ 159 ps | peak 0.199 mW | tau 1.5e-02 | T_colour 13300 K
+Pa=1.4 atm             Rmax  49.6 um | Rmin 0.678 um | Tmax  22204 K | Mach 1.11 | n 9.63e+27 m^-3 | photons 4.46e+05 | FWHM uv/red  156/ 157 ps | peak 1.274 mW | tau 7.7e-02 | T_colour 13400 K
+== ambient radius scan
+R0=3.0 um Pa=1.3       Rmax  31.2 um | Rmin 0.453 um | Tmax  14763 K | Mach 0.91 | n 1.07e+28 m^-3 | photons 9.55e+02 | FWHM uv/red   93/  93 ps | peak 0.005 mW | tau 1.2e-03 | T_colour 13300 K
+R0=3.0 um Pa=1.4       Rmax  43.2 um | Rmin 0.434 um | Tmax  24221 K | Mach 1.46 | n 1.22e+28 m^-3 | photons 1.87e+05 | FWHM uv/red   91/  92 ps | peak 0.891 mW | tau 1.2e-01 | T_colour 13450 K
+R0=4.5 um Pa=1.3       Rmax  38.6 um | Rmin 0.707 um | Tmax  14803 K | Mach 0.74 | n 8.49e+27 m^-3 | photons 5.35e+03 | FWHM uv/red  170/ 170 ps | peak 0.015 mW | tau 1.5e-03 | T_colour 13300 K
+R0=4.5 um Pa=1.4       Rmax  49.6 um | Rmin 0.678 um | Tmax  22204 K | Mach 1.11 | n 9.63e+27 m^-3 | photons 4.46e+05 | FWHM uv/red  156/ 157 ps | peak 1.274 mW | tau 7.7e-02 | T_colour 13400 K
+R0=6.0 um Pa=1.3       Rmax  44.4 um | Rmin 0.979 um | Tmax  14251 K | Mach 0.62 | n 7.13e+27 m^-3 | photons 1.11e+04 | FWHM uv/red  268/ 268 ps | peak 0.020 mW | tau 1.1e-03 | T_colour 13300 K
+R0=6.0 um Pa=1.4       Rmax  54.7 um | Rmin 0.938 um | Tmax  20352 K | Mach 0.89 | n 8.09e+27 m^-3 | photons 6.54e+05 | FWHM uv/red  239/ 240 ps | peak 1.259 mW | tau 4.5e-02 | T_colour 13350 K
+R0=7.5 um Pa=1.3       Rmax  48.1 um | Rmin 1.276 um | Tmax  12972 K | Mach 0.51 | n 6.04e+27 m^-3 | photons 7.80e+03 | FWHM uv/red  398/ 398 ps | peak 0.010 mW | tau 5.1e-04 | T_colour 13300 K
+R0=7.5 um Pa=1.4       Rmax  59.5 um | Rmin 1.212 um | Tmax  19016 K | Mach 0.75 | n 7.05e+27 m^-3 | photons 8.58e+05 | FWHM uv/red  338/ 339 ps | peak 1.192 mW | tau 2.8e-02 | T_colour 13300 K
+== numerical convergence (Pa = 1.35 atm)
+rtol=1e-08             Rmax  43.9 um | Rmin 0.691 um | Tmax  18371 K | Mach 0.92 | n 9.11e+27 m^-3 | photons 6.93e+04 | FWHM uv/red  159/ 160 ps | peak 0.199 mW | tau 1.5e-02 | T_colour 13300 K
+rtol=1e-10             Rmax  43.9 um | Rmin 0.691 um | Tmax  18371 K | Mach 0.92 | n 9.11e+27 m^-3 | photons 6.93e+04 | FWHM uv/red  159/ 159 ps | peak 0.199 mW | tau 1.5e-02 | T_colour 13300 K
+rtol=1e-12             Rmax  43.9 um | Rmin 0.691 um | Tmax  18371 K | Mach 0.92 | n 9.11e+27 m^-3 | photons 6.93e+04 | FWHM uv/red  159/ 159 ps | peak 0.199 mW | tau 1.5e-02 | T_colour 13300 K
+cycles=6               Rmax  43.9 um | Rmin 0.691 um | Tmax  18371 K | Mach 0.92 | n 9.11e+27 m^-3 | photons 6.92e+04 | FWHM uv/red  159/ 160 ps | peak 0.199 mW | tau 1.5e-02 | T_colour 13300 K
+== ionisation-potential lowering (Pa = 1.3 atm)
+dE=0 eV                Rmax  38.6 um | Rmin 0.707 um | Tmax  14803 K | Mach 0.74 | n 8.49e+27 m^-3 | photons 5.35e+03 | FWHM uv/red  170/ 170 ps | peak 0.015 mW | tau 1.5e-03 | T_colour 13300 K
+dE=1 eV                Rmax  38.6 um | Rmin 0.707 um | Tmax  14803 K | Mach 0.74 | n 8.49e+27 m^-3 | photons 1.21e+04 | FWHM uv/red  176/ 176 ps | peak 0.032 mW | tau 3.3e-03 | T_colour 13300 K
+dE=2 eV                Rmax  38.6 um | Rmin 0.707 um | Tmax  14803 K | Mach 0.74 | n 8.49e+27 m^-3 | photons 2.75e+04 | FWHM uv/red  183/ 183 ps | peak 0.070 mW | tau 7.3e-03 | T_colour 13300 K
+dE=3 eV                Rmax  38.6 um | Rmin 0.707 um | Tmax  14803 K | Mach 0.74 | n 8.49e+27 m^-3 | photons 6.25e+04 | FWHM uv/red  191/ 191 ps | peak 0.153 mW | tau 1.6e-02 | T_colour 13300 K
