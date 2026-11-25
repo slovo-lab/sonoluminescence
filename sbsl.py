@@ -101,6 +101,46 @@ def kappa(lam, T, n, dE=0.0):
     return k * np.exp(-(E_ION - dE) / (kB * T) + x) * (1 - np.exp(-x))
 
 
+# --- electron-neutral bremsstrahlung ------------------------------------------------
+# Momentum-transfer cross-section of argon for electrons.  APPROXIMATE values typed in
+# from memory of the standard swarm-derived sets (Milloy et al. 1977 below 4 eV, Phelps-
+# type compilations above); expect errors of a few tens of per cent.  To be replaced by
+# an LXCat data set.  Units: eV, 1e-20 m^2.
+_SIG_E = np.array([1e-3, 0.01, 0.05, 0.1, 0.23, 0.5, 1, 2, 3, 5, 7, 10, 12, 15, 20, 30, 50, 100])
+_SIG_Q = np.array([7.5, 4.6, 1.6, 0.59, 0.095, 0.35, 1.38, 3.0, 4.1, 6.7, 10.0, 15.0, 15.2, 14.1, 11.0, 6.5, 3.5, 1.9])
+ALPHA_FS = e2 / (h_pl / (2 * np.pi) * c0)
+SIG_SCALE = 1.0
+
+
+def sigma_tr(E):
+    """Momentum-transfer cross-section (m^2) at electron energy E (J)."""
+    x = np.log(np.clip(E / qe, _SIG_E[0], _SIG_E[-1]))
+    return SIG_SCALE * 1e-20 * np.exp(np.interp(x, np.log(_SIG_E), np.log(_SIG_Q)))
+
+
+def kappa_en_per_pair(lam, T, sigma=sigma_tr):
+    """Electron-neutral free-free absorption coefficient divided by n_e*n_0 (m^5).
+
+    Emission from the Dalgarno-Lane / Kas'yanov-Starostin cross-section
+        dsigma/domega = 4 alpha/(3 pi omega m c^2) sqrt(E'/E) [E sigma(E') + E' sigma(E)],
+    E' = E - hbar*omega, averaged over a Maxwellian; absorption from Kirchhoff's law.
+    lam: (L,) array, T: scalar.
+    """
+    hbar = h_pl / (2 * np.pi)
+    w = 2 * np.pi * c0 / np.asarray(lam, float)[:, None]
+    s = np.linspace(0, 7, 561)[None, :]
+    Ep = kB * T * s**2                       # E' (energy after emission)
+    E = Ep + hbar * w
+    dsdw = 4 * ALPHA_FS / (3 * np.pi * w * me * c0**2) * np.sqrt(Ep / E) * (E * sigma(Ep) + Ep * sigma(E))
+    f = 2 / np.sqrt(np.pi) * (kB * T) ** -1.5 * np.sqrt(E) * np.exp(-E / (kB * T))
+    v = np.sqrt(2 * E / me)
+    integrand = f * v * dsdw * (2 * kB * T * s)          # dE = 2 kT s ds
+    eps_w = hbar * w[:, 0] * np.trapezoid(integrand, s[0], axis=1)   # W m^3 per (rad/s)
+    nu = c0 / np.asarray(lam, float)
+    Bnu = 2 * h_pl * nu**3 / c0**2 / np.expm1(h_pl * nu / (kB * T))
+    return eps_w / (2 * Bnu)
+
+
 def emissivity(tau):
     tau = np.asarray(tau, float)
     big = 1 + np.exp(-2 * tau) / np.maximum(tau, 1e-300) + np.expm1(-2 * tau) / (2 * np.maximum(tau, 1e-300) ** 2)
@@ -111,7 +151,7 @@ def planck(lam, T):
     return 2 * h_pl * c0**2 / lam**5 / np.expm1(h_pl * c0 / (lam * kB * T))
 
 
-def analyse(res, lam=np.linspace(200e-9, 800e-9, 121), energy=False):
+def analyse(res, lam=np.linspace(200e-9, 800e-9, 121), energy=False, eneutral=False):
     sol, f, hc, N = res["sol"], res["f"], res["hc"], res["N"]
     t_end = sol.t[-1]
     # last full cycle
@@ -143,6 +183,12 @@ def analyse(res, lam=np.linspace(200e-9, 800e-9, 121), energy=False):
         Tf = 0.5 * (lo + hi)
     dEt, at = lowering(Tf, n, mode, res["dE"])
     k = kappa(L, Tf[:, None], n[:, None], dEt[:, None])
+    k_ion = k
+    if eneutral:
+        Tg = np.geomspace(max(Tf.min(), 300.0), Tf.max() * 1.001, 90)
+        tab = np.log(np.array([kappa_en_per_pair(lam, T) for T in Tg]) + 1e-300)   # (T, L)
+        kp = np.exp(np.array([np.interp(np.log(Tf), np.log(Tg), tab[:, j]) for j in range(len(lam))]).T)
+        k = k + kp * (at * n)[:, None] * ((1 - at) * n)[:, None]
     Pl = 4 * np.pi**2 * Rf[:, None] ** 2 * planck(L, Tf[:, None]) * emissivity(k * Rf[:, None])  # W/m
     Nph_rate = np.trapezoid(Pl * L / (h_pl * c0), lam, axis=1)
     out = dict(Rmax=Rmax, Rmin=Rf.min(), Tmax=Tf.max(), Umax=abs(Uf).max(),
@@ -161,6 +207,9 @@ def analyse(res, lam=np.linspace(200e-9, 800e-9, 121), energy=False):
     out["fwhm_uv"] = fwhm(np.trapezoid(Pl[:, uv], lam[uv], axis=1))
     out["fwhm_red"] = fwhm(np.trapezoid(Pl[:, red], lam[red], axis=1))
     out["fwhm_all"] = fwhm(Nph_rate)
+    ip = np.trapezoid(Pl, lam, axis=1).argmax()
+    out["frac_ion_uv"] = float(k_ion[ip, np.abs(lam - 300e-9).argmin()] / k[ip, np.abs(lam - 300e-9).argmin()])
+    out["frac_ion_red"] = float(k_ion[ip, np.abs(lam - 700e-9).argmin()] / k[ip, np.abs(lam - 700e-9).argmin()])
     # time-integrated spectrum -> best-fit blackbody colour temperature (shape only)
     spec = np.trapezoid(Pl, tf, axis=0)
     Ts = np.linspace(5000, 60000, 1101)
