@@ -41,7 +41,7 @@ INPUTS = {
 # assumed relative standard uncertainties (1 sigma), per case, with the reason
 U = {
     "water": {
-        "drive pressure": (0.10, "fits tolerate about 10 % (Hopkins et al. 2005)"),
+        "drive pressure": (0.04, "hydrophone precision about 0.05 bar (Brenner, Hilgenfeldt & Lohse 2002)"),
         "ambient radius": (0.05, "assumed, light-scattering fit"),
         "frequency": (0.001, "assumed, electronic"),
         "vapour pressure": (0.06, "liquid temperature known to 1 K"),
@@ -57,6 +57,7 @@ U = {
 }
 U["acid"] = dict(U["water"])
 U["acid"].update({
+    "drive pressure": (0.10, "fits tolerate about 10 % (Hopkins et al. 2005)"),
     "frequency": (0.066, "not reported; 30 to 37.8 kHz, rectangular"),
     "viscosity": (0.20, "strong dependence on concentration and temperature"),
     "vapour pressure": (0.50, "assumed"),

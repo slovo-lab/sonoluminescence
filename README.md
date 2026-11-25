@@ -188,9 +188,9 @@ Caveats: the acoustic frequency is not given in the 2006 paper and 30 kHz is ass
 
 | Input | Assumed uncertainty | Water: c for brightness | Water: share of variance | Acid: c for brightness | Acid: share of variance |
 |---|---|---|---|---|---|
-| Drive pressure | 10% | 25 | 27% | 68 | 92% |
-| Vapour diffusivity | 40% | 9.7 | 65% | 0.0 | 0% |
-| Gas thermal conductivity | 20% | −6.3 | 7% | −1.6 | 0% |
+| Drive pressure | 4% / 10% | 25 | 6% | 68 | 92% |
+| Vapour diffusivity | 40% | 9.7 | 84% | 0.0 | 0% |
+| Gas thermal conductivity | 20% | −6.3 | 9% | −1.6 | 0% |
 | Viscosity | 2.5% / 20% | −0.2 | 0% | −8.6 | 6% |
 | Frequency | 0.1% / 6.6% | −4.6 | 0% | −15 | 2% |
 | Vapour pressure | 6% / 50% | −7.6 | 1% | 0.0 | 0% |
@@ -199,21 +199,32 @@ Caveats: the acoustic frequency is not given in the 2006 paper and 30 kHz is ass
 
 | | Water | Acid |
 |---|---|---|
-| Brightness, combined uncertainty (1σ, linearised) | factor 120 | factor 1,200 |
+| Brightness, combined uncertainty (1σ, linearised) | factor 68 | factor 1,200 |
 | Centre temperature, combined uncertainty | 24% | 45% |
 | Same without the drive-pressure term | factor 60 | factor 7.5 |
 | Drive-pressure accuracy needed to keep its term below a factor of 2 | 2.8% | 1.0% |
 
 Reading:
 
-- **Brightness scales as the 25th power of the drive pressure in water and the 68th power in acid.** With the 10% tolerance quoted for experimental fits, no model can be tested on brightness: any prediction within a factor of about 100 (water) or 1,000 (acid) is compatible with the data.
-- **In water the largest term is a model parameter**, the vapour diffusivity, for which published simulations differ by a factor of two. In acid the vapour terms vanish and the drive pressure carries 92% of the variance.
+- **Brightness scales as the 25th power of the drive pressure in water and the 68th power in acid.** In acid, with the 10% tolerance quoted for experimental fits, the pressure term alone makes brightness uncertain by a factor of several hundred. In water, with a hydrophone precision of 4%, the pressure term is a factor of 2.7.
+- **In water the largest term is a model parameter**, the vapour diffusivity, for which published simulations differ by a factor of two; it carries 84% of the variance. In acid the vapour terms vanish and the drive pressure carries 92%.
 - **What would make brightness a test:** the pressure at the bubble to 1–3%, and for water an independent fix of the trapped vapour.
 - **Robust outputs.** The collapse radius has coefficients near 1 for every input, which is why the mechanics agree with the measurements at the 5% level.
 - The response is not symmetric: in water −10% in drive gives 170 times less light, +10% only 4 times more, because a harder-driven bubble traps more vapour. The linearised figure overstates the upward range.
 - Model switches at the baseline: without chemistry the water bubble is 15 times brighter; without ionisation-potential lowering it is 2.6 times dimmer.
 
 Two errors in the first version of `profile.py` were found while preparing this budget and are fixed: the argon count grew by about 4% per cycle, and the search for the moment of collapse could miss it by a fraction of a nanosecond, which made the light output jump by a factor of 10 between otherwise identical runs. The numbers in v0.6 and v0.7 above are from the corrected code.
+
+## v0.9: literature check
+
+What was already known:
+
+- **Sulfuric acid.** Moshaii, Imani & Silatani (Phys. Rev. E 80, 046325, 2009) simulated an argon bubble in water and in several concentrations of sulfuric acid to quantify the effects of vapour pressure and viscosity. Kim, Byun & Kwak report calculated wall velocity, peak temperature and pressure in agreement with the acid experiments. The comparison in v0.7 therefore confirms published work and is not new.
+- **Sensitivity.** The review by Brenner, Hilgenfeldt & Lohse (Rev. Mod. Phys. 74, 425, 2002) already states that neither the ambient radius nor the drive pressure is known a priori, that fitted values depend on model details, that the hydrophone precision is about 0.05 bar, and that errors in the interior model and in the emission model may compensate each other. The qualitative point of v0.8 is in that review.
+
+What the searches did not find: a budget that assigns each input a sensitivity coefficient and an uncertainty and adds them up, as in v0.8. A few searches are not proof that none exists.
+
+One correction followed from this check: v0.8 first assumed 10% for the drive pressure in water; the review's 0.05 bar is 4%, and the tables above now use it. For the acid the 10% tolerance of Hopkins et al. is kept.
 
 ## Open questions
 
@@ -226,7 +237,7 @@ Two errors in the first version of `profile.py` were found while preparing this 
 - What acoustic frequency was used for the argon bubbles in sulfuric acid?
 - Add xenon, to use the xenon measurements in acid and water.
 - Replace the linearised budget by a Monte Carlo one, since the response is strongly non-linear.
-- Has an uncertainty budget of this kind been published before? Literature check needed.
+- ~~Has an uncertainty budget of this kind been published before?~~ Not found in a first search; the qualitative point is in the 2002 review, see v0.9.
 - Do water and its fragments (OH, H, O) emit enough light to fill the gap?
 - Which heat-loss model is right for the dry bubble?
 - ~~Does electron–neutral bremsstrahlung change the spectrum shape?~~ Yes, see v0.3.
@@ -260,6 +271,8 @@ python reproduce.py
 - Storey & Szeri, Proc. R. Soc. Lond. A 456, 1685 (2000)
 - Storey & Szeri, Phys. Rev. Lett. 88, 074301 (2002)
 - arXiv:physics/0501041
+- Brenner, Hilgenfeldt & Lohse, Rev. Mod. Phys. 74, 425 (2002)
+- Moshaii, Imani & Silatani, Phys. Rev. E 80, 046325 (2009)
 - Tse & Leung, arXiv:cond-mat/0606359
 - Zel'dovich & Raizer, *Physics of Shock Waves and High-Temperature Hydrodynamic Phenomena*
 
