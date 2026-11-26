@@ -1,0 +1,6 @@
+== benchmark case A (references: centre T dry 20,900 / 17,900 K; inert vapour 9,700 / 17,000 K; chemistry 7,000 / 8,900 K; vapour 14 % / 7.7 %)
+A dry                  Rmax  25.4 Rmin 0.895 | vapour total  0.0 % centre  0.0 % | T centre inert  15126 K, mass-avg   7508 K, centre after chemistry  13898 K | photons 5.14e+03 peak 0.0036 mW FWHM uv/red 561/588 ps | argon drift 0.0 %
+A wet                  Rmax  29.0 Rmin 0.774 | vapour total  5.5 % centre 14.2 % | T centre inert  11729 K, mass-avg   8157 K, centre after chemistry   7417 K | photons 4.91e+00 peak 0.0000 mW FWHM uv/red 282/303 ps | argon drift 0.0 %
+== standard case (R0 = 4.5 um, 26.5 kHz, water 20 C)
+wet Pa=1.3             Rmax  41.2 Rmin 0.685 | vapour total  7.4 % centre 19.3 % | T centre inert  16574 K, mass-avg  13565 K, centre after chemistry   9985 K | photons 7.98e+03 peak 0.0226 mW FWHM uv/red 126/135 ps | argon drift 0.0 %
+wet Pa=1.4             Rmax  52.2 Rmin 0.643 | vapour total 10.9 % centre 28.0 % | T centre inert  16063 K, mass-avg  16130 K, centre after chemistry  10264 K | photons 4.76e+04 peak 0.1762 mW FWHM uv/red  99/102 ps | argon drift 0.0 %
