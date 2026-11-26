@@ -247,6 +247,47 @@ What the searches did not find: a budget that assigns each input a sensitivity c
 
 One correction followed from this check: v0.8 first assumed 10% for the drive pressure in water; the review's 0.05 bar is 4%, and the tables above now use it. For the acid the 10% tolerance of Hopkins et al. is kept.
 
+## v0.11: Monte Carlo uncertainty budget
+
+`mc_budget.py` varies all twelve inputs of v0.8 at once, with the same assumed uncertainties, and runs the full model for each draw (Latin-hypercube sampling, 128 draws per case, one acoustic cycle per run). Numbers: [results_mc.txt](results_mc.txt).
+
+| | Water (R0 4.5 µm, 1.35 atm) | Acid (dim bubble) |
+|---|---|---|
+| Photons per flash, median | 20,000 | 8,500 |
+| 68% interval | 320 to 480,000 | 0.2 to 1.5 million |
+| 95% interval | 23 to 1.7 million | 0 to 15 million |
+| 68% interval as a factor below / above the median | 62 / 24 | 35,000 / 180 |
+| Linearised budget (v0.8), each way | 65 | 1,200 |
+| Mean as a multiple of the median | 13 | 210 |
+| Draws with under 1% of the baseline light | 12% | 38% |
+| Centre temperature, 95% interval | 7,600 to 18,900 K | 2,900 to 17,600 K |
+| Input most correlated with brightness (rank correlation) | vapour diffusivity, +0.90 | drive pressure, +0.94 |
+
+Reading:
+
+- **Water.** The linearised budget was about right on the low side and too wide on the high side: the light cannot rise far, because a harder collapse traps more vapour. How fast vapour escapes the bubble decides the answer, as in v0.8.
+- **Acid.** The linearised budget was wrong in kind, not in degree. With the 10% drive-pressure tolerance quoted for the experimental fits, the model cannot say whether the dim bubble glows at all: in 38% of the draws it gives under 1% of the baseline light, and the 95% interval starts at zero. The distribution has a threshold, not a spread.
+- **Mean and median differ by a factor of 13 and 210.** An average over draws, or over flashes of a jittering bubble, is dominated by the rare hot collapses. Comparing a model's typical flash with a measured average brightness is biased upward by that factor.
+- The rank correlations of frequency in water (−0.25) and of sound speed in acid (+0.16) are probably chance: their assumed uncertainties are 0.1% and 0.5% and their linear effect is below 1%. With twelve inputs and 128 draws, one or two such values are expected.
+
+Caveats: one acoustic cycle per run differs from two cycles by 0.4% in water but 19% in acid (baseline 66,000 against 55,500 photons), which is small next to the spread. 128 draws fix the 95% bounds to within a factor of about 2 (bootstrap in the results file).
+
+## v0.12: radiative attachment of electrons to H and O (issue #10)
+
+When water breaks up, a free electron can attach to a hydrogen or oxygen atom and emit a photon; in equilibrium this is the absorption by H⁻ and O⁻ ions, the process that makes the surface of the Sun opaque. This is not new for sonoluminescence: Hammer & Frommhold (2002) included it, and An (2006) found it dominant for argon bubbles in cold water. It was missing here. `attach_study.py`, numbers: [results_attach.txt](results_attach.txt). The H⁻ cross-section is the Wishart (1979) fit; the O⁻ cross-section is an approximate plateau, varied ×0.5 and ×2.
+
+| Case | Photons without | Photons with | Factor |
+|---|---|---|---|
+| Water 20 °C, 1.30 atm | 8,000 | 29,000 | 3.7 |
+| Water 20 °C, 1.35 atm | 24,000 | 73,000 (67,000–85,000 for O⁻ ×0.5–×2) | 3.0 |
+| Water 20 °C, 1.40 atm | 48,000 | 131,000 | 2.8 |
+| Water, vapour pressure of 0 °C, 1.40 atm | 3.1 million | 3.6 million | 1.15 |
+| Sulfuric acid, dim bubble | 55,500 | 56,200 | 1.01 |
+
+- In water at 20 °C the light rises about threefold; peak power reaches 0.07–0.43 mW, so the gap to the measured order of 10 mW shrinks from 57–440 to about 23–130 times. It does not close.
+- In acid the effect is nil, as it should be with almost no vapour. In cold water, where the bubble is hotter and the fragments are ionised, it adds 15%.
+- The flash becomes slightly longer and its colour temperature rises by 400–600 K.
+
 ## Open questions
 
 - ~~Does a non-ideal ionisation model close the brightness gap without an opaque core?~~ No, see v0.2.
@@ -257,7 +298,8 @@ One correction followed from this check: v0.8 first assumed 10% for the drive pr
 - ~~Does a hot centre (non-uniform temperature) supply the missing light?~~ No: vapour collects at the centre, see v0.6.
 - What acoustic frequency was used for the argon bubbles in sulfuric acid?
 - Add xenon, to use the xenon measurements in acid and water.
-- Replace the linearised budget by a Monte Carlo one, since the response is strongly non-linear.
+- ~~Replace the linearised budget by a Monte Carlo one.~~ Done, see v0.11.
+- Add OH band emission (the remaining part of issue #10).
 - ~~Has an uncertainty budget of this kind been published before?~~ Not found in a first search; the qualitative point is in the 2002 review, see v0.9.
 - Do water and its fragments (OH, H, O) emit enough light to fill the gap?
 - Which heat-loss model is right for the dry bubble?
@@ -294,6 +336,10 @@ python reproduce.py
 - arXiv:physics/0501041
 - Brenner, Hilgenfeldt & Lohse, Rev. Mod. Phys. 74, 425 (2002)
 - Moshaii, Imani & Silatani, Phys. Rev. E 80, 046325 (2009)
+- Hammer & Frommhold, Phys. Rev. E 65, 046309 (2002)
+- An, Phys. Rev. E 74, 026304 (2006)
+- Wishart, Mon. Not. R. Astron. Soc. 187, 59P (1979)
+- JCGM 101:2008, Propagation of distributions using a Monte Carlo method
 - Tse & Leung, arXiv:cond-mat/0606359
 - Zel'dovich & Raizer, *Physics of Shock Waves and High-Temperature Hydrodynamic Phenomena*
 
