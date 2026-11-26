@@ -1,0 +1,20 @@
+== water: 128 samples; baseline photons 2.38e+04, centre T 10190 K
+   photons per flash: median 2e+04; 68 % interval 321 .. 4.84e+05; 95 % interval 23 .. 1.68e+06
+   95 % bounds, bootstrap spread: lower 12.7..85.9, upper 1.38e+06..2.2e+06
+   width of the 95 % interval: factor 7.29e+04; linearised GUM gives factor 1.31e+07
+   68 % interval as a factor either side of the median: down 62.2, up 24.2; linearised: 65.4 each way
+   mean photons 2.53e+05 = 12.7 x median; baseline is at the 52th percentile
+   centre temperature: median 10011 K, 95 % interval 7582 .. 18866 K
+   samples with fewer than 1 % of baseline light: 12 %
+   rank correlation with ln(photons): vapour diffusivity +0.90, drive pressure +0.26, frequency -0.25, gas thermal conductivity -0.21, ambient radius -0.08
+
+== acid: 128 samples; baseline photons 6.61e+04, centre T 12202 K
+   photons per flash: median 8.53e+03; 68 % interval 0.241 .. 1.54e+06; 95 % interval 0 .. 1.47e+07
+   95 % bounds, bootstrap spread: lower 0..6.64e-10, upper 8.27e+06..2.64e+07
+   width of the 95 % interval: factor 1.47e+10; linearised GUM gives factor 1.09e+12
+   68 % interval as a factor either side of the median: down 3.54e+04, up 181; linearised: 1.18e+03 each way
+   mean photons 1.78e+06 = 209 x median; baseline is at the 62th percentile
+   centre temperature: median 10646 K, 95 % interval 2899 .. 17600 K
+   samples with fewer than 1 % of baseline light: 38 %
+   rank correlation with ln(photons): drive pressure +0.94, viscosity -0.23, frequency -0.19, sound speed +0.16, ambient radius -0.12
+

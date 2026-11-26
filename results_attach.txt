@@ -1,0 +1,10 @@
+== water, R0 = 4.5 um, 26.5 kHz, 20 C
+water 1.3 atm                photons 7.98e+03 -> 2.92e+04 (x3.66) | peak 0.0226 -> 0.0746 mW | tau 0.007 -> 0.018 | FWHM uv/red 150/156 ps | T_colour 8550 -> 9150 K
+water 1.35 atm               photons 2.39e+04 -> 7.28e+04 (x3.05) | peak 0.0794 -> 0.216 mW | tau 0.019 -> 0.042 | FWHM uv/red 129/135 ps | T_colour 9000 -> 9600 K
+water 1.4 atm                photons 4.76e+04 -> 1.31e+05 (x2.75) | peak 0.176 -> 0.427 mW | tau 0.035 -> 0.073 | FWHM uv/red 114/120 ps | T_colour 9300 -> 9900 K
+water 1.35 atm, O- x0.5      photons 2.39e+04 -> 6.68e+04 (x2.80) | peak 0.0794 -> 0.198 mW | tau 0.019 -> 0.04 | FWHM uv/red 126/135 ps | T_colour 9000 -> 9400 K
+water 1.35 atm, O- x2.0      photons 2.39e+04 -> 8.47e+04 (x3.55) | peak 0.0794 -> 0.253 mW | tau 0.019 -> 0.046 | FWHM uv/red 129/138 ps | T_colour 9000 -> 10000 K
+== water at 0 C vapour pressure (611 Pa), 1.4 atm
+cold water 1.4 atm           photons 3.12e+06 -> 3.58e+06 (x1.15) | peak 5.14 -> 5.76 mW | tau 0.94 -> 0.99 | FWHM uv/red 258/300 ps | T_colour 11350 -> 11800 K
+== sulfuric acid (almost no vapour), dim bubble
+acid dim                     photons 5.55e+04 -> 5.62e+04 (x1.01) | peak 0.00555 -> 0.00562 mW | tau 0.00057 -> 0.00057 | FWHM uv/red 3600/3800 ps | T_colour 7600 -> 7600 K

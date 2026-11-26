@@ -153,6 +153,35 @@ def solve_p(T, Nv, R, vol_y, pv, nar, iters=40):
     return p
 
 
+# --- radiative attachment of electrons to H and O (absorption by H- and O- photodetachment)
+_WISHART = (1.99654, -1.18267e-5, 2.64243e-6, -4.40524e-10, 3.23992e-14, -1.39568e-18, 2.78701e-23)
+EA_H, EA_O = 0.754 * 1.602176634e-19, 1.461 * 1.602176634e-19
+
+
+def sigma_hminus(lam):
+    """H- bound-free cross-section, m^2 (Wishart 1979 fit, as tabulated in Gray's
+    'Observation and Analysis of Stellar Photospheres'; fit range 225-1500 nm)."""
+    L = np.asarray(lam) * 1e10
+    s = sum(c * L**i for i, c in enumerate(_WISHART)) * 1e-22
+    return np.where(L < 16419, np.maximum(s, 0.0), 0.0)
+
+
+def sigma_ominus(lam, scale=1.0):
+    """O- photodetachment, m^2: APPROXIMATE plateau of 6e-22 m^2 above the 849 nm threshold."""
+    return np.where(np.asarray(lam) < 849e-9, 6e-22 * scale, 0.0)
+
+
+def negative_ion_kappa(lam, T, ne, nH, nO, o_scale=1.0):
+    """Absorption by H- and O- in Saha equilibrium with neutral atoms and free electrons,
+    with stimulated emission.  Shapes: T, ne, nH, nO (S,); lam (L,) -> (S, L)."""
+    from sbsl import me
+    lamT = (h_pl**2 / (2 * np.pi * me * kB * T)) ** 1.5
+    nHm = 0.25 * nH * ne * lamT * np.exp(EA_H / (kB * T))
+    nOm = (6 / 18) * nO * ne * lamT * np.exp(EA_O / (kB * T))
+    stim = 1 - np.exp(-h_pl * c0 / (lam[None, :] * kB * T[:, None]))
+    return (nHm[:, None] * sigma_hminus(lam)[None, :] + nOm[:, None] * sigma_ominus(lam, o_scale)[None, :]) * stim
+
+
 def unpack(res, t):
     """Fields at times t (array).  Returns R, U, p, T[t, node], x[t, node], n[t, node]."""
     N = res["N"]
@@ -184,7 +213,7 @@ def collapse_time(res):
 
 
 def analyse(res, lam=np.linspace(200e-9, 800e-9, 41), half=0.6e-9, npts=401, chemistry=True,
-            nray=32, emission=True, lowering=True):
+            nray=32, emission=True, lowering=True, attachment=False, o_scale=1.0):
     N = res["N"]; vol_y = res["vol_y"]; y = res["y"]
     tm, Rmax = collapse_time(res)
     tf = np.linspace(tm - half, tm + half, npts)
@@ -206,6 +235,11 @@ def analyse(res, lam=np.linspace(200e-9, 800e-9, 41), half=0.6e-9, npts=401, che
         return out
     # ---- post-hoc chemistry and ionisation in hot shells (fixed volume, fixed energy)
     hot = T > 3000.0
+    if not hot.any():                      # collapse too weak to heat any shell above 3000 K
+        out.update(Tc=float(T[:, 0].max()), photons=0.0, Ppeak=0.0, tau=0.0, fwhm_uv=float("nan"),
+                   fwhm_red=float("nan"), T_colour=float("nan"), x_centre=float(x[im, 0]),
+                   t_peak_minus_tRmin=float("nan"), ne_centre=0.0, ne_max=0.0, T_lightweighted=float("nan"))
+        return out
     Th, xh, nh = T[hot], x[hot], n[hot]
     budget = (1 - xh) * 1.5 * kB * Th + xh * e_w(Th)
     free = 1 - nh * B_AR
@@ -239,6 +273,8 @@ def analyse(res, lam=np.linspace(200e-9, 800e-9, 41), half=0.6e-9, npts=401, che
     kp = np.exp(np.array([np.interp(np.log(Tq), np.log(Tg), tab[:, j]) for j in range(len(lam))]).T)
     n_neut = sum(dens[s] - ions[s] for s in dens) + n_m
     kap[hot] = k_ion + kp * (ne * n_neut)[:, None]
+    if attachment:
+        kap[hot] += negative_ion_kappa(lam, Tq, ne, dens["H"] - ions["H"], dens["O"] - ions["O"], o_scale)
     B = np.zeros_like(kap)
     B[hot] = planck(lam[None, :], Tq[:, None])
     # ---- ray tracing: shells bounded by faces; node N (wall half-cell) is cold, dropped
