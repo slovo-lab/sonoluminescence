@@ -149,11 +149,11 @@ Effect on v0.4, standard case with doubled diffusivity (vapour share 11–17% in
 
 `profile.py` drops the uniform-bubble assumption: pressure stays uniform, while temperature and vapour share vary from centre to wall (heat conduction, vapour diffusion, Stefan flow at the wall). Chemistry and ionisation are post-hoc per shell; light is traced along rays through the shells. Numbers: [results_profile.txt](results_profile.txt).
 
-Numerical quality: the pressure follows from exact conservation of argon; successive acoustic cycles repeat to four digits; going from 40 to 80 nodes changes the light output by 2.6% and the centre temperature by 0.4%.
+Numerical quality: argon and vapour are conserved (see v0.10); successive acoustic cycles repeat to four digits; going from 40 to 80 nodes changes the light output by 2.6% and the centre temperature by 0.4%.
 
-- Benchmark case A: vapour 5.4% in total and 14% at the centre; centre temperature 7,400 K with chemistry. The references give 7.7% and 14% vapour, 7,000 and 8,900 K.
-- Standard case, 1.3–1.4 atm: vapour 7–11% in total but 19–28% at the centre; centre temperature 10,000–10,300 K with chemistry; 7,900–47,000 photons; peak 0.022–0.17 mW.
-- Vapour collects in the hot centre, so the centre is not the dry, bright core one might hope for. Against a peak power of order 10 mW the model is 57–450 times too dim.
+- Benchmark case A: vapour 5.5% in total and 14% at the centre; centre temperature 7,400 K with chemistry. The references give 7.7% and 14% vapour, 7,000 and 8,900 K.
+- Standard case, 1.3–1.4 atm: vapour 7–11% in total but 19–28% at the centre; centre temperature 10,000–10,300 K with chemistry; 8,000–48,000 photons; peak 0.023–0.18 mW.
+- Vapour collects in the hot centre, so the centre is not the dry, bright core one might hope for. Against a peak power of order 10 mW the model is 57–440 times too dim.
 
 ## v0.7: a test without tuning — argon bubbles in sulfuric acid
 
@@ -162,7 +162,7 @@ The v0.6 code was run for 85% sulfuric acid with only the liquid properties chan
 | | Model | Measured |
 |---|---|---|
 | **Dim bubble** (R0 13 µm, 1.4 bar): collapse radius | 2.95 µm | 3.1 µm |
-| Gas density at the centre | 1.19 × 10²¹ cm⁻³ | 1.0–1.2 × 10²¹ cm⁻³ |
+| Gas density at the centre | 1.18 × 10²¹ cm⁻³ | 1.0–1.2 × 10²¹ cm⁻³ |
 | Temperature at the centre | 12,100 K | 10,000 K |
 | Pressure | 2,170 bar | 1,100–1,600 bar |
 | Electron density | 4.4 × 10¹⁸ cm⁻³ | 3.8 × 10¹⁷ cm⁻³ |
@@ -171,13 +171,13 @@ The v0.6 code was run for 85% sulfuric acid with only the liquid properties chan
 | Pressure | 4,980 bar | 3,700 bar |
 | Flash duration | 3.8 ns | 5–10 ns |
 | Brightness, bright / dim | 330 times | about 10,000 times |
-| Brightness, bright acid / water | 390–2,300 times | 1,500–2,700 times |
+| Brightness, bright acid / water | 380–2,300 times | 1,500–2,700 times |
 
 Reading:
 
 - **Mechanics and thermodynamics agree.** Collapse radius within 5%, gas density within 13%, temperature within 21%, pressure within a factor of 1.3 to 2. The model also gives nanosecond flashes in acid against 0.1 ns in water, as observed.
 - **The acid/water brightness ratio comes out at the measured order.** Bookkeeping: the acid bubble holds 54 times more atoms and shines 38 times longer.
-- **Vapour is still decisive.** The same acid bubble given the vapour pressure of water traps 7.8% vapour, cools from 16,500 K to 6,600 K and emits 97,000 times less light.
+- **Vapour is still decisive.** The same acid bubble given the vapour pressure of water traps 7.8% vapour, cools from 16,500 K to 6,600 K and emits 98,000 times less light.
 - **Brightness and electron density are not predicted, only bracketed** (see v0.8). The electron density is 12 times too high at 30 kHz and 0.6 times the measured value at 37.8 kHz.
 
 Caveats: the acoustic frequency is not given in the 2006 paper and 30 kHz is assumed; at 37.8 kHz the dim bubble gives 9,100 K, 1,180 bar and 0.90 × 10²¹ cm⁻³. Lowering the viscosity from 25 to 10 mPa·s raises the light 67-fold.
@@ -189,9 +189,9 @@ Caveats: the acoustic frequency is not given in the 2006 paper and 30 kHz is ass
 | Input | Assumed uncertainty | Water: c for brightness | Water: share of variance | Acid: c for brightness | Acid: share of variance |
 |---|---|---|---|---|---|
 | Drive pressure | 4% / 10% | 25 | 6% | 68 | 92% |
-| Vapour diffusivity | 40% | 9.7 | 84% | 0.0 | 0% |
-| Gas thermal conductivity | 20% | −6.3 | 9% | −1.6 | 0% |
-| Viscosity | 2.5% / 20% | −0.2 | 0% | −8.6 | 6% |
+| Vapour diffusivity | 40% | 9.6 | 84% | 0.0 | 0% |
+| Gas thermal conductivity | 20% | −6.1 | 9% | −1.6 | 0% |
+| Viscosity | 2.5% / 20% | −0.2 | 0% | −8.5 | 6% |
 | Frequency | 0.1% / 6.6% | −4.6 | 0% | −15 | 2% |
 | Vapour pressure | 6% / 50% | −7.6 | 1% | 0.0 | 0% |
 | Ambient radius | 5% | −2.1 | 0% | 1.5 | 0% |
@@ -199,9 +199,9 @@ Caveats: the acoustic frequency is not given in the 2006 paper and 30 kHz is ass
 
 | | Water | Acid |
 |---|---|---|
-| Brightness, combined uncertainty (1σ, linearised) | factor 68 | factor 1,200 |
+| Brightness, combined uncertainty (1σ, linearised) | factor 65 | factor 1,200 |
 | Centre temperature, combined uncertainty | 24% | 45% |
-| Same without the drive-pressure term | factor 60 | factor 7.5 |
+| Same without the drive-pressure term | factor 58 | factor 7.5 |
 | Drive-pressure accuracy needed to keep its term below a factor of 2 | 2.8% | 1.0% |
 
 Reading:
@@ -214,6 +214,27 @@ Reading:
 - Model switches at the baseline: without chemistry the water bubble is 15 times brighter; without ionisation-potential lowering it is 2.6 times dimmer.
 
 Two errors in the first version of `profile.py` were found while preparing this budget and are fixed: the argon count grew by about 4% per cycle, and the search for the moment of collapse could miss it by a fraction of a nanosecond, which made the light output jump by a factor of 10 between otherwise identical runs. The numbers in v0.6 and v0.7 above are from the corrected code.
+
+## v0.10: mass conservation closed
+
+The earlier fix (v0.8) made the argon count exact by computing the pressure from it. That hid the remaining error instead of removing it: vapour was carried as a mole fraction at the grid nodes, in non-conservative form, so the inconsistency moved into the vapour. Over one cycle the vapour content of the bubble differed from the vapour that crossed the wall by 3.3%, 3.9% and 7.3% on grids of 20, 40 and 80 nodes. Growing with grid refinement, it was an error in the formulation, not in the grid.
+
+`profile.py` now carries the number of vapour molecules in each cell and changes it only by fluxes through the cell faces (bulk flow relative to the moving face plus diffusion). `conservation_check.py` tests four things, sampling the collapse every 0.5 ps:
+
+| Check | 20 nodes | 40 nodes | 80 nodes |
+|---|---|---|---|
+| Argon in the whole bubble | 2.5 × 10⁻¹⁴ | 1.8 × 10⁻¹⁴ | 1.8 × 10⁻¹⁴ |
+| Vapour change against wall flux | 0.15% | 0.82% | 1.91% |
+| Argon in inner regions against flux through their boundary | 15.7% | 6.6% | 3.3% |
+| Pressure from conservation against the rate in the wall equation | 0.22% | 0.17% | 0.12% |
+
+Reading:
+
+- **Vapour.** The cell changes add up exactly to the flux through the wall; what remains is the time-integration tolerance. At 40 nodes the residual is 0.82% with the default tolerance, 0.077% at ten times tighter and 0.005% at a hundred times tighter.
+- **Argon, locally.** The error halves with every doubling of the grid: a first-order discretisation error, not a leak. It comes from moving temperature along the nodes while the fluxes are computed at the faces.
+- **Pressure.** The value fixed by conservation and the rate used to move the wall agree to 0.2%.
+
+Effect on results: photon counts change by 1–2% and temperatures by under 0.3% in every reference case. No conclusion above changes. The tables in v0.6–v0.8 are recomputed with the corrected code.
 
 ## v0.9: literature check
 

@@ -58,12 +58,15 @@ def run(R0=4.5e-6, Pa_atm=1.3, f=26.5e3, cycles=2, pv=2337.0, Tw=293.15, mu_w=1.
         nD = d_scale * D0_DIFF * N_REF * (T / Tw) ** 0.7
         return cv, cp, kTb, n, kap, nD
 
-    def rhs(t, s):
-        T = np.empty(N + 1); x = np.empty(N + 1)
-        T[:N] = s[:N]; x[:N] = np.clip(s[N:2 * N], 0.0, 0.9999)
+    def rhs(t, s, diag=False):
+        T = np.empty(N + 1)
+        T[:N] = s[:N]; Nv = s[N:2 * N]
         R, U = s[2 * N], s[2 * N + 1]
         T[N] = Tw
-        p = float(solve_p(T[None, :], x[None, :], np.array([R]), vol_y, pv, nar)[0])
+        p = float(solve_p(T[None, :], Nv[None, :], np.array([R]), vol_y, pv, nar)[0])
+        nn = p / (kB * T + B_AR * p)
+        x = np.empty(N + 1)
+        x[:N] = np.clip(Nv / (nn[:N] * vol_y[:N] * R**3), 0.0, 0.9999)
         x[N] = min(pv / p, 0.999)
         cv, cp, kTb, n, kap, nD = fields(T, x, p)
         # face fluxes (per 4 pi), r^2 * flux
@@ -93,43 +96,56 @@ def run(R0=4.5e-6, Pa_atm=1.3, f=26.5e3, cycles=2, pv=2337.0, Tw=293.15, mu_w=1.
         u = np.zeros(N + 1)
         u[1:] = 0.5 * (r2u_lo[1:] + r2u_f[1:]) / (R * y[1:]) ** 2
         DT = (kB * T * dp + (kB * T + B_AR * p) * Qp) / (p * cp)
-        Dx = (Fx_up - Fx_lo) / (vol * n)
         conv = (u - y * U) / R
         dTdt = DT - conv * dTdy
-        dxdt = Dx - conv * dxdy
+        # vapour: conservative finite volumes.  Molecules cross face j (between nodes j and
+        # j+1) by bulk flow relative to the moving face and by diffusion; a cell's vapour
+        # content changes only by these face fluxes, so no vapour is created or lost inside.
+        nf = 0.5 * (n[1:] + n[:-1])
+        F = nf * (r2u_f[:N] - rf2 * yf * U)                       # total molecules / (s 4pi)
+        x_up = np.where(F > 0, x[:-1], x[1:])
+        G = x_up * F - Fx                                         # vapour molecules / (s 4pi)
+        dNv = np.concatenate([[0.0], G[:-1]]) - G
         Pac = -Pa * np.sin(w * t)
         M = U / c_l
         num = ((1 + M) * (p - P0 - Pac) / rho_l + R * dp / (rho_l * c_l)
                - 4 * mu_w * U / (rho_l * R) - 2 * sigma_w / (rho_l * R) - 1.5 * U**2 * (1 - M / 3))
         out = np.empty_like(s)
-        out[:N] = dTdt[:N]; out[N:2 * N] = dxdt[:N]
+        if diag:
+            return dict(F=F, G=G, dp=dp, p=p, n=n, x=x)
+        out[:N] = dTdt[:N]; out[N:2 * N] = dNv
         out[2 * N] = U; out[2 * N + 1] = num / ((1 - M) * R)
         return out
 
     x0 = pv / p0
-    nar = R0**3 * np.sum(vol_y) * (1 - x0) * p0 / (kB * Tw + B_AR * p0)     # argon atoms / (4 pi)
-    s0 = np.concatenate([np.full(N, Tw), np.full(N, x0), [R0, 0.0]])
-    atol = np.concatenate([np.full(N, 1e-3), np.full(N, 1e-9), [1e-13, 1e-8]])
+    n0 = p0 / (kB * Tw + B_AR * p0)
+    nar = R0**3 * np.sum(vol_y) * (1 - x0) * n0                  # argon atoms / (4 pi)
+    Nv0 = x0 * n0 * vol_y[:N] * R0**3                             # vapour molecules per cell / (4 pi)
+    s0 = np.concatenate([np.full(N, Tw), Nv0, [R0, 0.0]])
+    atol = np.concatenate([np.full(N, 1e-3), np.full(N, max(1e-6 * Nv0.min(), 1e-3)), [1e-13, 1e-8]])
     sol = solve_ivp(rhs, [0, cycles / f], s0, method="LSODA", rtol=rtol, atol=atol,
                     max_step=1 / f / 400, dense_output=True)
-    return dict(sol=sol, y=y, vol_y=vol_y, N=N, f=f, R0=R0, Tw=Tw, pv=pv, Pa_atm=Pa_atm, c_l=c_l, nar=nar)
+    return dict(sol=sol, y=y, vol_y=vol_y, N=N, f=f, R0=R0, Tw=Tw, pv=pv, Pa_atm=Pa_atm, c_l=c_l, nar=nar,
+                rhs=rhs)
 
 
-def solve_p(T, x, R, vol_y, pv, nar, iters=30):
-    """Uniform pressure from conservation of argon:
-    R^3 sum_i vol_i (1 - x_i) p / (k T_i + b p) = nar, with the wall value x_N = pv / p.
-    T, x: arrays (time, node); the last column of x is ignored.  Newton iteration."""
-    T = np.asarray(T, float); x = np.array(x, float)
-    w = vol_y[None, :] * R[:, None] ** 3
-    x[:, -1] = 0.0
-    p = nar / np.sum(w * (1 - x) / (kB * T), axis=1)
+def solve_p(T, Nv, R, vol_y, pv, nar, iters=40):
+    """Uniform pressure from conservation of argon.  Interior cells hold Nv vapour molecules
+    (per 4 pi); the wall half-cell has the saturated vapour fraction pv / p:
+        sum_i<N (n_i V_i - Nv_i) + n_N V_N (1 - pv/p) = nar,   n_i = p / (k T_i + b p).
+    T: (time, N+1); Nv: (time, N).  Newton iteration on p."""
+    T = np.asarray(T, float); Nv = np.asarray(Nv, float)
+    V = vol_y[None, :] * R[:, None] ** 3
+    Nv_sum = Nv.sum(axis=1)
+    p = (nar + Nv_sum) / np.sum(V / (kB * T), axis=1)
     for _ in range(iters):
-        xw = np.minimum(pv / p, 0.999)
-        one_x = 1 - x; one_x[:, -1] = 1 - xw
         den = kB * T + B_AR * p[:, None]
-        F = np.sum(w * one_x * p[:, None] / den, axis=1) - nar
-        dF = np.sum(w * one_x * kB * T / den**2, axis=1)
-        dF = dF + np.where(pv / p < 0.999, w[:, -1] * (pv / p**2) * p / den[:, -1], 0.0)
+        n = p[:, None] / den
+        dn = kB * T / den**2
+        xw = np.minimum(pv / p, 0.999)
+        F = np.sum(V[:, :-1] * n[:, :-1], axis=1) - Nv_sum + V[:, -1] * n[:, -1] * (1 - xw) - nar
+        dF = np.sum(V[:, :-1] * dn[:, :-1], axis=1) + V[:, -1] * (dn[:, -1] * (1 - xw)
+                + np.where(pv / p < 0.999, n[:, -1] * pv / p**2, 0.0))
         step = F / dF
         p = np.maximum(p - step, 0.2 * p)
         if np.max(np.abs(step) / p) < 1e-13:
@@ -143,8 +159,11 @@ def unpack(res, t):
     s = res["sol"].sol(np.atleast_1d(t))
     R, U = s[2 * N], s[2 * N + 1]
     T = np.vstack([s[:N], np.full((1, s.shape[1]), res["Tw"])]).T
-    x = np.vstack([np.clip(s[N:2 * N], 0.0, 0.9999), np.zeros((1, s.shape[1]))]).T
-    p = solve_p(T, x, R, res["vol_y"], res["pv"], res["nar"])
+    Nv = s[N:2 * N].T
+    p = solve_p(T, Nv, R, res["vol_y"], res["pv"], res["nar"])
+    nn = p[:, None] / (kB * T + B_AR * p[:, None])
+    x = np.empty_like(T)
+    x[:, :-1] = np.clip(Nv / (nn[:, :-1] * res["vol_y"][None, :-1] * R[:, None] ** 3), 0.0, 0.9999)
     x[:, -1] = np.minimum(res["pv"] / p, 0.999)
     n = p[:, None] / (kB * T + B_AR * p[:, None])
     return R, U, p, T, x, n
