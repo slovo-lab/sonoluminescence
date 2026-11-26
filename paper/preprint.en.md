@@ -1,6 +1,6 @@
 # Can the brightness of single-bubble sonoluminescence test a model? A Monte Carlo uncertainty budget
 
-**DRAFT, not reviewed. Authorship to be confirmed.**
+**DRAFT, not reviewed.**
 Anton Krugovov (slovo-lab); analysis, code and text prepared with Claude, an AI model by Anthropic (see *AI disclosure*).
 
 ## Abstract
